@@ -1,7 +1,9 @@
 import subprocess
+from subprocess import PIPE, Popen, STDOUT
 import sys, os
 import editdistance
 import numpy as np
+from testcase import test
 
 def exe_command(command_str, path):
     # execute a command and return stdout and stderr
@@ -15,6 +17,15 @@ def exe_command(command_str, path):
 def compile_file(fname, path):
     compile_str = f'g++ -Wall -o test {fname}'
     return exe_command(compile_str, path)
+
+def exec_test_case(test_str, exec_path):
+    proc = subprocess.Popen([exec_path], stdout = PIPE, stderr = PIPE, stdin = PIPE)
+    try:
+        outs, errs = proc.communicate(input = test_str.encode(), timeout = 1)
+        return outs
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        return None
 
 def main():
     if len(sys.argv) != 2:
@@ -101,16 +112,20 @@ def main():
             print('not a valid username!')
         else:
             if not username in compiled_set:
-                print('it is not compiled!')
-            else:
+                print('there are compilation error!')
+
+            exec_path = os.path.join(folder_path, username, 'test')
+
+            if os.path.isfile(exec_path) and not test(exec_test_case, exec_path):
                 # compiled testing
-                print('start testing')
-                code = subprocess.call(os.path.join(folder_path, username, 'test'))
+                print('--------start testing---------')
+                code = subprocess.call(exec_path)
                 if code != 0:
                     print('return code is wrong')
+
             full_path = os.path.join(folder_path, username)
             cpps = ' '.join([x for x in os.listdir(full_path) if '.cpp' in x])
-            print('--------------')
+            print('--code block--')
             subprocess.call(f'ccat {cpps}', shell = True, cwd = full_path)
             print('--------------')
             input('press enter to continue')
