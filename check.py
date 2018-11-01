@@ -21,7 +21,7 @@ def compile_file(fname, path):
 def exec_test_case(test_str, exec_path):
     proc = subprocess.Popen([exec_path], stdout = PIPE, stderr = PIPE, stdin = PIPE)
     try:
-        outs, errs = proc.communicate(input = test_str.encode(), timeout = 1)
+        outs, errs = proc.communicate(input = test_str.encode('ascii'), timeout = 1)
         return outs
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -70,17 +70,39 @@ def main():
             cpp_list = [x for x in os.listdir(i_full_path) if '.cpp' in x]
             sum = 0
             for cpp in cpp_list:
-                i_file = open(os.path.join(i_full_path, cpp), 'r')
-                j_file = open(os.path.join(j_full_path, cpp), 'r')
+                try:
+                    i_file = open(os.path.join(i_full_path, cpp), 'r')
+                    j_file = open(os.path.join(j_full_path, cpp), 'r')
 
-                i_content = i_file.read()
-                j_content = j_file.read()
+                    i_content = i_file.read()
+                    j_content = j_file.read()
 
-                sim = editdistance.eval(i_content, j_content)
-                sum = sum + sim
+                    sim = editdistance.eval(i_content, j_content)
+                    sum = sum + sim
 
-                i_file.close()
-                j_file.close()
+                    i_file.close()
+                    j_file.close()
+                except:
+                    print('invalid file encoding found, not valid ascii charaters in: ')
+                    sum = np.Inf
+                    try:
+
+                        i_file = open(os.path.join(i_full_path, cpp), 'r')
+                        i_file.read()
+                        i_file.close()
+                    except:
+                        print(f'invalid characters found in file {i_full_path}')
+
+                    try:
+
+                        j_file = open(os.path.join(j_full_path, cpp), 'r')
+                        j_file.read()
+                        j_file.close()
+                    except:
+                        print(f'invalid characters found in file {j_full_path}')
+                    i_file.close()
+                    j_file.close()
+
             similarity[i][j] = sum
             similarity[j][i] = sum
 
@@ -124,7 +146,7 @@ def main():
                     print('return code is wrong')
 
             full_path = os.path.join(folder_path, username)
-            cpps = ' '.join([x for x in os.listdir(full_path) if '.cpp' in x])
+            cpps = ' '.join([x for x in os.listdir(full_path) if '.cpp' in x or '.h' in x])
             print('--code block--')
             subprocess.call(f'ccat {cpps}', shell = True, cwd = full_path)
             print('--------------')
