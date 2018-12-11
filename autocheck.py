@@ -128,29 +128,15 @@ def main():
     print(f'student: {dirs[x]}, {dirs[y]}')
     print('-----end of similarity report-----')
 
-    while True:
-        username = input('enter username:')
-        if not username in dirs:
-            print('not a valid username!')
-        else:
-            if not username in compiled_set:
-                print('there are compilation error!')
-
-            exec_path = os.path.join(folder_path, username, 'test')
-
-            if os.path.isfile(exec_path) and not test(exec_test_case, exec_path):
-                # compiled testing
-                print('--------start testing---------')
-                code = subprocess.call(exec_path)
-                if code != 0:
-                    print('return code is wrong')
-
-            full_path = os.path.join(folder_path, username)
-            cpps = ' '.join([x for x in os.listdir(full_path) if '.cpp' in x or '.h' in x])
-            print('--code block--')
-            subprocess.call(f'ccat {cpps}', shell = True, cwd = full_path)
-            print('--------------')
-            input('press enter to continue')
+    for username in dirs:
+        exec_path = os.path.join(folder_path, username, 'test')
+        try:
+            if test(exec_test_case, exec_path):
+                print(f'{username} successfully pass all the test case')
+            else:
+                print(f'{username} failed the test case')
+        except:
+            print(f'{username} have invalid char in the program, please double check')
 
 if __name__ == '__main__':
     main()
